@@ -1,0 +1,85 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Quantum.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:actipro="http://schemas.actiprosoftware.com/avaloniaui"
+        xmlns:primitives="clr-namespace:ActiproSoftware.UI.Avalonia.Controls.Primitives;assembly=ActiproSoftware.Avalonia.Shared"
+        xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        WindowStartupLocation="CenterScreen"
+        x:Class="Quantum.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Quantum" CanResize="False"
+        Width="1000" Height="600" MinHeight="350" MinWidth="600">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+	<DockPanel>
+		<actipro:ChromedTitleBar DockPanel.Dock="Top" IsMaximizeButtonAllowed="False">
+			<actipro:ChromedTitleBar.Resources>
+				<actipro:ComparisonConverter x:Key="RightContentMarginConverter">
+					<actipro:ComparisonConverter.TrueResult>
+						<Thickness>0,0,0,0</Thickness>
+					</actipro:ComparisonConverter.TrueResult>
+					<actipro:ComparisonConverter.FalseResult>
+						<Thickness>10,10,10,10</Thickness>
+					</actipro:ComparisonConverter.FalseResult>
+				</actipro:ComparisonConverter>
+			</actipro:ChromedTitleBar.Resources>
+			
+			<actipro:ChromedTitleBar.LeftContent>
+				<primitives:OverlayInputFilter>
+					<StackPanel Orientation="Horizontal">
+						<StackPanel Margin="10,7,0,7" VerticalAlignment="Center" IsHitTestVisible="False">
+							<TextBlock Text="Quantum" FontSize="10" TextTrimming="CharacterEllipsis" Opacity="0.85" />
+							<TextBlock Margin="0,-2,0,0" Text="{Binding CurrentNameView}" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+						</StackPanel>
+					</StackPanel>
+				</primitives:OverlayInputFilter>
+			</actipro:ChromedTitleBar.LeftContent>
+			
+			<actipro:ChromedTitleBar.RightContent>
+				<primitives:OverlayInputFilter>
+					<StackPanel Margin="{Binding $parent[actipro:ChromedTitleBar].HasCaptionButtons, Converter={StaticResource RightContentMarginConverter}}" Orientation="Horizontal">
+						<Button ContentTemplate="{actipro:GlyphTemplate Refresh16}"
+						        Command="{Binding }"
+						        Theme="{actipro:ControlTheme TitleBarButton}"
+						        ToolTip.Tip="Переподключение" IsVisible="False"/>
+						
+						<actipro:ToggleThemeButton Theme="{actipro:ControlTheme TitleBarToggleThemeButton}" 
+						                           ToolTip.Tip="Сменить тему" IsVisible="False"/>
+					</StackPanel>
+				</primitives:OverlayInputFilter>
+			</actipro:ChromedTitleBar.RightContent>
+		</actipro:ChromedTitleBar>
+	
+	    <primitives:OverlayInputFilter>
+		    <Grid>
+			    <actipro:WindowResizeGrip/>
+			    
+			    <StackPanel HorizontalAlignment="Right" VerticalAlignment="Top" ZIndex="99">
+				    <actipro:InfoBar Severity="{Binding NotificationStatus}" Title="{Binding NotificationTitleText}" IsVisible="{Binding NotificationVisible}"
+				                     Message="{Binding NotificationMessage}" IsWrapped="True" HorizontalAlignment="Right" 
+				                     VerticalAlignment="Top" Margin="20" CanClose="False">
+				    </actipro:InfoBar>        
+			    </StackPanel>
+			    
+			    <Grid.RowDefinitions>
+				    <RowDefinition Height="*"/>
+			    </Grid.RowDefinitions>
+		
+			    <Grid.ColumnDefinitions>
+				    <ColumnDefinition Width="*"/>
+			    </Grid.ColumnDefinitions>
+		
+			    <Border Grid.Row="0" Grid.Column="0">
+				    <ContentControl Content="{Binding CurrentView}"/>
+			    </Border>
+		    </Grid>
+	    </primitives:OverlayInputFilter>
+	</DockPanel>
+</Window>

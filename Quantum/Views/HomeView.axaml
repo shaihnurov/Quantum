@@ -1,0 +1,23 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Quantum.ViewModels"
+             xmlns:actipro="http://schemas.actiprosoftware.com/avaloniaui"
+             xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:HomeViewModel" Background="Black"
+             x:Class="Quantum.Views.HomeView">
+    
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        
+        <Border Grid.Column="0" BorderThickness="1" CornerRadius="{actipro:ScaledCornerRadius 4}"
+            Padding="{actipro:ScaledThickness '4 + 20'}" VerticalAlignment="Center">
+            
+        </Border>
+    </Grid>
+</UserControl>

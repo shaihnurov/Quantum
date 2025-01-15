@@ -1,0 +1,54 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Quantum.ViewModels"
+             xmlns:actipro="http://schemas.actiprosoftware.com/avaloniaui"
+             xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:DataType="vm:RegisterViewModel" Background="Black"
+             x:Class="Quantum.Views.RegisterView">
+    
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        
+        <Border Grid.Column="0" BorderThickness="1" CornerRadius="{actipro:ScaledCornerRadius 4}"
+            Padding="{actipro:ScaledThickness '4 + 20'}" VerticalAlignment="Center">
+	
+            <Border BorderThickness="1" CornerRadius="{actipro:ScaledCornerRadius 1.5}" Padding="{actipro:ScaledThickness 5}">
+                <StackPanel Spacing="{actipro:ScaledDouble 1.5}" Width="250">
+                    <TextBox Watermark="E-mail Address" Text="{Binding Email}"/>
+                    <TextBox Watermark="Login" Text="{Binding Login}"/>
+                    
+                    <TextBox Watermark="Password" PasswordChar="{actipro:ThemeResource EditPasswordChar}" 
+                             TextWrapping="Wrap" Text="{Binding Password}"/>
+                    <TextBox Watermark="Confirm Password" PasswordChar="{actipro:ThemeResource EditPasswordChar}" 
+                             TextWrapping="Wrap" Text="{Binding ConfirmPassword}"/>
+                    
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <TextBlock Text="Stay on the account?"/>
+                        <ToggleSwitch Classes="theme-solid warning" Margin="15 0 0 0"
+                                      IsChecked="{Binding IsRememberMe}" />
+                    </StackPanel>
+
+                    <Button Content="Register" Margin="0 10 0 10" Command="{Binding RegisterCommand}"/>
+                    
+                    <TextBlock TextWrapping="Wrap">
+                        <Run>Already have an account? </Run>
+                        <InlineUIContainer>
+                            <actipro:HyperlinkTextBlock Command="{Binding AuthCommand}">Sign in</actipro:HyperlinkTextBlock>
+                        </InlineUIContainer>
+                        <Run> for more information</Run>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </Border>
+        
+        <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <gif:GifImage Source="avares://Quantum/Assets/GIF/authGIF.gif" Stretch="Uniform" Width="500"/>
+        </Border>
+    </Grid>
+</UserControl>
