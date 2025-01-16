@@ -44,7 +44,7 @@ public class Program
         app.MapHub<AuthHub>("/auth");
         app.MapHub<RegisterHub>("/register");
         
-        app.MapGet("/", () => "Successful connection");
+        app.MapGet("/", () => $"Session ID: {Guid.NewGuid}");
 
         try
         {
