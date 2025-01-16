@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Server.Hub;
 using Server.Model;
-using System.Security.Cryptography;
 
 namespace Server;
 
@@ -44,10 +43,8 @@ public class Program
         
         app.MapHub<AuthHub>("/auth");
         app.MapHub<RegisterHub>("/register");
-
-        byte[] data = new byte[6];
-        RandomNumberGenerator.Fill(data);
-        app.MapGet("/", () => $"Session ID: {Convert.ToHexString(data)[..6]}");
+        
+        app.MapGet("/", () => $"Session ID: {Guid.NewGuid}");
 
         try
         {
