@@ -10,7 +10,7 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        
+
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(builder.Configuration)
             .Enrich.FromLogContext()
@@ -19,8 +19,10 @@ public class Program
             .CreateLogger();
         
         builder.Host.UseSerilog();
-        
-        builder.Services.AddDbContext<ApplicationContextDB>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        var connectionString = $"User ID={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};Host={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};";
+
+        builder.Services.AddDbContext<ApplicationContextDB>(options => options.UseNpgsql(connectionString));
         
         builder.Services.AddSignalR();
         builder.Services.AddScoped<AuthHub>();
