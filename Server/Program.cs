@@ -22,7 +22,7 @@ public class Program
 
         var connectionString = $"User ID={Environment.GetEnvironmentVariable("DB_USER")};Password={Environment.GetEnvironmentVariable("DB_PASSWORD")};Host={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("DB_PORT")};Database={Environment.GetEnvironmentVariable("DB_NAME")};";
 
-        builder.Services.AddDbContext<ApplicationContextDB>(options => options.UseNpgsql(builder.Configuration.GetConnectionString(connectionString)));
+        builder.Services.AddDbContext<ApplicationContextDB>(options => options.UseNpgsql(connectionString));
         
         builder.Services.AddSignalR();
         builder.Services.AddScoped<AuthHub>();
