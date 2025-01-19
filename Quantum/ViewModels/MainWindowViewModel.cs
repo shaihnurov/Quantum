@@ -1,7 +1,5 @@
-﻿using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Quantum.Service;
 
 namespace Quantum.ViewModels;
@@ -9,7 +7,7 @@ namespace Quantum.ViewModels;
 public class MainWindowViewModel : ObservableObject
 {
     private object? _currentView;
-    private string _currentNameView;
+    private string? _currentNameView;
 
     private string? _notificationMessage;
     private string? _notificationTitleText;
@@ -27,7 +25,7 @@ public class MainWindowViewModel : ObservableObject
                 newServerConnectionHandler.ConnectServer();
         }
     }
-    public string CurrentNameView
+    public string? CurrentNameView
     {
         get => _currentNameView;
         set => SetProperty(ref _currentNameView, value);

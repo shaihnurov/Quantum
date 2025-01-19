@@ -11,7 +11,7 @@ namespace Quantum.ViewModels;
 
 public abstract class ViewModelBase : ObservableObject, IServerConnectionHandler
 {
-    protected HubConnection _hubConnection;
+    protected HubConnection? _hubConnection;
     
     private readonly string _signalRUrl;
     private const int _maxRetryAttempts = 5;
@@ -33,7 +33,7 @@ public abstract class ViewModelBase : ObservableObject, IServerConnectionHandler
         {
             try
             {
-                _hubConnection = new HubConnectionBuilder().WithUrl($"https://quantumserver.onrender.com/{_signalRUrl}").WithAutomaticReconnect(
+                _hubConnection = new HubConnectionBuilder().WithUrl($"https://localhost:7159/{_signalRUrl}").WithAutomaticReconnect(
                 [
                     TimeSpan.FromSeconds(3),
                     TimeSpan.FromSeconds(5),

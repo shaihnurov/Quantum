@@ -6,7 +6,9 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
+using Quantum.Service;
 using Serilog;
+using Server.Model;
 
 namespace Quantum.ViewModels;
 
@@ -53,18 +55,31 @@ public class AuthViewModel : ViewModelBase
         {
             await base.ConnectServer();
             
-            _hubConnection.On<string>("AuthSuccess", async response => {
+            _hubConnection?.On<string>("AuthSuccess", async response => {
                 Dispatcher.UIThread.Post(() =>
                 { 
-                    _mainWindowViewModel.CurrentView = new HomeViewModel();
+                    _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel);
                 });
                 await _mainWindowViewModel.Notification("Auth", response, true, 1, true);
             });
-            
-            _hubConnection.On<string>("AuthError", async response =>
+
+            _hubConnection?.On<string, UserDataJson>("FirtsAuthSuccess", async (response, userData) => {
+                await UserDataStorage.SaveUserData(userData);
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel);
+                });
+
+                await _mainWindowViewModel.Notification("Auth", response, true, 1, true);
+            });
+
+            _hubConnection?.On<string>("AuthError", async response =>
             {
                 await _mainWindowViewModel.Notification("Auth", response, true, 3, true);
+                UserDataStorage.DeleteUserData();
             });
+
+            await _hubConnection!.InvokeAsync("AuthToken", await UserDataStorage.GetUserData());
         }
         catch (HttpRequestException ex)
         {
@@ -99,6 +114,6 @@ public class AuthViewModel : ViewModelBase
     }
     private async Task AuthUser()
     {
-        await _hubConnection.InvokeAsync("AuthUser", Email, Password, IsRememberMe);
+        await _hubConnection!.InvokeAsync("AuthUser", Email, Password, IsRememberMe);
     }
 }

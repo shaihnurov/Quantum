@@ -6,18 +6,29 @@
              xmlns:actipro="http://schemas.actiprosoftware.com/avaloniaui"
              xmlns:gif="clr-namespace:Avalonia.Labs.Gif;assembly=Avalonia.Labs.Gif"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:DataType="vm:HomeViewModel" Background="Black"
+             x:DataType="vm:HomeViewModel"
              x:Class="Quantum.Views.HomeView">
     
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
+      
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         
-        <Border Grid.Column="0" BorderThickness="1" CornerRadius="{actipro:ScaledCornerRadius 4}"
+        <Border Grid.Column="0" Grid.Row="0" BorderThickness="1" CornerRadius="{actipro:ScaledCornerRadius 1}"
+            Padding="{actipro:ScaledThickness '2'}" Background="#131515">
+
+          <ContentControl Content="{Binding CurrentViewChatList}"/>
+        </Border>      
+
+        <Border Grid.Column="1" Grid.Row="0" BorderThickness="1" CornerRadius="{actipro:ScaledCornerRadius 4}"
             Padding="{actipro:ScaledThickness '4 + 20'}" VerticalAlignment="Center">
             
+          <ContentControl Content="{Binding CurrentViewChat}"/>
         </Border>
     </Grid>
 </UserControl>

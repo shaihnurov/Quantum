@@ -22,6 +22,7 @@
                 <StackPanel Spacing="{actipro:ScaledDouble 1.5}" Width="250">
                     <TextBox Watermark="E-mail Address" Text="{Binding Email}"/>
                     <TextBox Watermark="Login" Text="{Binding Login}"/>
+                    <TextBox Watermark="Name" Text="{Binding Name}"/>
                     
                     <TextBox Watermark="Password" PasswordChar="{actipro:ThemeResource EditPasswordChar}" 
                              TextWrapping="Wrap" Text="{Binding Password}"/>

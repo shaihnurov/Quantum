@@ -6,7 +6,9 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
+using Quantum.Service;
 using Serilog;
+using Server.Model;
 
 namespace Quantum.ViewModels;
 
@@ -16,6 +18,7 @@ public class RegisterViewModel : ViewModelBase
     
     private string? _email;
     private string? _login;
+    private string? _name;
     private string? _password;
     private string? _confirmPassword;
     private bool _isRememberMe;
@@ -29,6 +32,11 @@ public class RegisterViewModel : ViewModelBase
     {
         get => _login;
         set => SetProperty(ref _login, value);
+    }
+    public string? Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
     }
     public string? Password
     {
@@ -65,17 +73,18 @@ public class RegisterViewModel : ViewModelBase
         {
             await base.ConnectServer();
             
-            _hubConnection.On<string>("RegisterSuccess", async response =>
+            _hubConnection?.On<string, UserDataJson>("RegisterSuccess", async (response, userData) =>
             { 
                 Dispatcher.UIThread.Post(() =>
                 {
-                    _mainWindowViewModel.CurrentView = new HomeViewModel();
+                    _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel);
                 });
                 
                 await _mainWindowViewModel.Notification("Register", response, true, 1, true);
+                await UserDataStorage.SaveUserData(userData);
             });
             
-            _hubConnection.On<string>("RegisterError", async response =>
+            _hubConnection?.On<string>("RegisterError", async response =>
             {
                 await _mainWindowViewModel.Notification("Register", response, true, 3, true);
             });
@@ -114,7 +123,7 @@ public class RegisterViewModel : ViewModelBase
     private async Task RegisterUser()
     {
         if(Password == ConfirmPassword)
-            await _hubConnection.InvokeAsync("RegisterUser", Email, Login, Password);
+            await _hubConnection!.InvokeAsync("RegisterUser", Email, Login, Name, Password, IsRememberMe);
         else
             await _mainWindowViewModel.Notification("Register", "Password does not match the conditions", true, 3, true);
     }

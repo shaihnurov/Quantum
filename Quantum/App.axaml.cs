@@ -1,11 +1,11 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Markup.Xaml;
 using Quantum.ViewModels;
 using Quantum.Views;
+using Serilog;
 
 namespace Quantum;
 
@@ -14,6 +14,14 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.File("logs/application.log", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+
+        Log.Information("Приложение запущено");
     }
 
     public override void OnFrameworkInitializationCompleted()

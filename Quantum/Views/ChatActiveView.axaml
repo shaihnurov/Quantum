@@ -1,0 +1,47 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Quantum.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="510"
+             x:DataType="vm:ChatActiveViewModel"
+             x:Class="Quantum.Views.ChatActiveView">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*" MinHeight="473"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <TextBlock Text="Choose who you'd like to write to"
+           HorizontalAlignment="Center"
+           VerticalAlignment="Center"
+           FontSize="18"
+           FontWeight="DemiBold"
+           IsVisible="{Binding TitleTextChat}"/>
+
+    <!-- Чат -->
+    <ScrollViewer Grid.Row="0" HorizontalAlignment="Center"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  Name="ChatScrollViewer">
+      <ItemsControl ItemsSource="{Binding MessagesList}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <StackPanel Orientation="Vertical" />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <TextBlock Text="{Binding}" Margin="5" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </ScrollViewer>
+
+    <!-- Панель отправки сообщений -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
+      <TextBox Text="{Binding Message}" Watermark="Message" MinWidth="300"/>
+      <Button Command="{Binding SendMessageCommand}" Content="Send" Margin="5 0 0 0" MaxWidth="300"/>
+    </StackPanel>
+  </Grid>
+</UserControl>
