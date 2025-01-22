@@ -38,7 +38,6 @@ public class HomeViewModel : ObservableObject
     {
         _mainWindowViewModel = mainWindowViewModel;
 
-        CurrentViewChatList = new ChatListViewModel(_mainWindowViewModel);
-        CurrentViewChat = new ChatActiveViewModel(_mainWindowViewModel);
+        CurrentViewChatList = new ChatListViewModel(_mainWindowViewModel, this);
     }
 }

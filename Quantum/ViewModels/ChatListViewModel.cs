@@ -10,12 +10,16 @@ using Server.Model;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Quantum.Service;
+using CommunityToolkit.Mvvm.Input;
+using ActiproSoftware.UI.Avalonia.Controls;
+using Server.Model.DTO;
 
 namespace Quantum.ViewModels
 {
     public class ChatListViewModel : ViewModelBase
     {
         private readonly MainWindowViewModel _mainWindowViewModel;
+        private readonly HomeViewModel _homeViewModel;
 
         private ObservableCollection<ChatModel>? _chatsList;
         
@@ -25,11 +29,15 @@ namespace Quantum.ViewModels
             set => SetProperty(ref _chatsList, value);
         }
 
+        public AsyncRelayCommand<object> SelectedChatCommand { get; set; }
 
-        public ChatListViewModel(MainWindowViewModel mainWindowViewModel) : base ("loaduserchat")
+        public ChatListViewModel(MainWindowViewModel mainWindowViewModel, HomeViewModel homeViewModel) : base ("loaduserchat")
         {
             _mainWindowViewModel = mainWindowViewModel;
+            _homeViewModel = homeViewModel;
             ChatsList = [];
+
+            SelectedChatCommand = new AsyncRelayCommand<object>(SelectedChat);
         }
 
         public override async Task ConnectServer()
@@ -45,6 +53,21 @@ namespace Quantum.ViewModels
                         foreach (var chatModel in response)
                         {
                             ChatsList?.Add(chatModel);
+                        }
+                    });
+                });
+
+                _hubConnection?.On<ChatDTO>("ReceiveDataChat", chatData =>
+                {
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        if (chatData != null)
+                        {
+                            _homeViewModel.CurrentViewChat = new ChatActiveViewModel(_mainWindowViewModel, chatData);
+                        }
+                        else
+                        {
+                            MessageBox.Show("Ошибка: чата не найдено.");
                         }
                     });
                 });
@@ -81,6 +104,13 @@ namespace Quantum.ViewModels
             {
                 Log.Fatal(ex, "Произошла непредвиденная ошибка.");
                 await _mainWindowViewModel.Notification("Error", "There's been an unforeseen error", true, 3, true);
+            }
+        }
+        private async Task SelectedChat(object parameter)
+        {
+            if(parameter is ChatModel currentChat)
+            {
+                await _hubConnection!.InvokeAsync("GetDataChat", currentChat.Id);
             }
         }
     }

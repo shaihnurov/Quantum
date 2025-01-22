@@ -10,7 +10,7 @@
     
     <Grid>
       <StackPanel Margin="20">
-        <ItemsControl ItemsSource="{Binding ChatsList}">
+        <ItemsControl ItemsSource="{Binding ChatsList}" x:Name="Chats">
           <ItemsControl.ItemsPanel>
             <ItemsPanelTemplate>
               <WrapPanel Orientation="Vertical" HorizontalAlignment="Center"/>
@@ -20,7 +20,8 @@
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <Border Margin="0,10,0,0" CornerRadius="5" Padding="5">
-                <Button>
+                <Button CommandParameter="{Binding}"
+                        Command="{Binding #Chats.((vm:ChatListViewModel)DataContext).SelectedChatCommand}">
                   <WrapPanel Orientation="Horizontal">
                     <TextBlock Margin="5 0" FontWeight="Bold" Text="{Binding Name}" TextWrapping="Wrap"/>
                   </WrapPanel>

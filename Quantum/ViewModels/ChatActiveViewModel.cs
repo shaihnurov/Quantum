@@ -9,6 +9,10 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using Quantum.Service;
+using Server.Model.DTO;
+using ActiproSoftware.UI.Avalonia.Controls;
+using Tmds.DBus.Protocol;
+using System.Linq;
 
 namespace Quantum.ViewModels
 {
@@ -16,17 +20,15 @@ namespace Quantum.ViewModels
     {
         private readonly MainWindowViewModel _mainWindowViewModel;
 
-        private ObservableCollection<string> _messagesList;
         private bool _chatvisible = false;
         private bool _titleTextChat = true;
-        private string _name;
-        private string _message = string.Empty;
+        private string? _name;
+        private string? _chatName;
+        private int _chatId;
+        private string? _messageTime;
+        private string? _message = string.Empty;
+        public ObservableCollection<string>? _listMessage;
 
-        public ObservableCollection<string> MessagesList
-        {
-            get => _messagesList;
-            set => SetProperty(ref _messagesList, value);
-        }
         public bool ChatVisible
         {
             get => _chatvisible;
@@ -37,23 +39,39 @@ namespace Quantum.ViewModels
             get => _titleTextChat;
             set => SetProperty(ref _titleTextChat, value);
         }
-        public string Name
+        public string? Name
         {
             get => _name;
             set => SetProperty(ref _name, value);
         }
-        public string Message
+        public string? ChatName
+        {
+            get => _chatName;
+            set => SetProperty(ref _chatName, value);
+        }
+        public string? MessageTime
+        {
+            get => _messageTime;
+            set => SetProperty(ref _messageTime, value);
+        }
+        public string? Message
         {
             get => _message;
             set => SetProperty(ref _message, value);
         }
+        public ObservableCollection<string>? ListMessage
+        {
+            get => _listMessage;
+            set => SetProperty(ref _listMessage, value);
+        }
 
         public AsyncRelayCommand SendMessageCommand { get; set; }
 
-        public ChatActiveViewModel(MainWindowViewModel mainWindowViewModel) : base("chathub")
+        public ChatActiveViewModel(MainWindowViewModel mainWindowViewModel, ChatDTO chatData) : base("chathub")
         {
             _mainWindowViewModel = mainWindowViewModel;
-            MessagesList = [];
+            ListMessage = [];
+            LoadChat(chatData);
 
             SendMessageCommand = new AsyncRelayCommand(SendMessage);
         }
@@ -67,8 +85,9 @@ namespace Quantum.ViewModels
                 _hubConnection?.On<string, string>("ReceiveMessage", (userName, message) => {
                     Dispatcher.UIThread.Post(() =>
                     {
-                        var newMessage = $"{userName}: {message}";
-                        MessagesList.Add(newMessage);
+                        var messageText = $"{userName}: {message}";
+                        MessageTime = TimeOnly.FromDateTime(DateTime.Now).ToString("HH:mm");
+                        ListMessage.Add(messageText);
                     });
                 });
 
@@ -115,8 +134,28 @@ namespace Quantum.ViewModels
                 var userData = await UserDataStorage.GetUserData();
                 ChatVisible = true;
                 TitleTextChat = false;
-                await _hubConnection!.InvokeAsync("SendMessage", userData.Name, Message);
+                await _hubConnection!.InvokeAsync("SendMessage", userData.Name, Message, _chatId, userData.Id);
                 Message = string.Empty;
+            }
+        }
+        private void LoadChat(ChatDTO chatData)
+        {
+            ChatVisible = true;
+            TitleTextChat = false;
+            ListMessage?.Clear();
+
+            ChatName = chatData.Name!;
+
+            foreach (var message in chatData.Messages!)
+            {
+                _chatId = message.ChatId;
+                var user = chatData.Users!.FirstOrDefault(u => u.Id == message.UserId);
+                if (user != null)
+                {
+                    var messageText = $"{user.Name}: {message.Content}";
+                    MessageTime = message.Timestamp.ToString("HH:mm");
+                    ListMessage?.Add(messageText);
+                }
             }
         }
     }
