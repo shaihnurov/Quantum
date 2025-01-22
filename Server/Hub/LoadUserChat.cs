@@ -38,7 +38,13 @@ namespace Server.Hub
         }
         public async Task GetDataChat(int chatId)
         {
-            var chat = await _db.Chats.Where(c => c.Id == chatId).Include(c => c.Messages).Include(c => c.Users).ThenInclude(uc => uc.User).FirstOrDefaultAsync();
+            var chat = await _db.Chats
+                .Where(c => c.Id == chatId)
+                .AsSplitQuery()
+                .Include(c => c.Messages)
+                .Include(c => c.Users)
+                    .ThenInclude(uc => uc.User)
+                .FirstOrDefaultAsync();
 
             if (chat == null)
             {
@@ -46,26 +52,31 @@ namespace Server.Hub
                 return;
             }
 
-            var chatDTO = new ChatDTO
-            {
-                Id = chat.Id,
-                Name = chat.Name,
-                Users = chat.Users.Select(uc => new UserDTO
-                {
-                    Id = uc.User!.Id,
-                    Name = uc.User.Name,
-                    Login = uc.User.Login,
-                    Email = uc.User.Email,
-                }).ToList(),
-                Messages = chat.Messages.Select(m => new MessageDTO
-                {
-                    Id = m.Id,
-                    Content = m.Content,
-                    Timestamp = m.Timestamp,
-                    ChatId = m.ChatId,
-                    UserId = m.UserId,
-                }).ToList()
-            };
+            var chatDTO = await _db.Chats
+                    .Where(c => c.Id == chatId)
+                    .Select(c => new ChatDTO
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Users = c.Users.Select(uc => new UserDTO
+                        {
+                            Id = uc.User!.Id,
+                            Name = uc.User.Name,
+                            Login = uc.User.Login,
+                            Email = uc.User.Email,
+                        }).ToList(),
+                        Messages = c.Messages.Select(m => new MessageDTO
+                        {
+                            Id = m.Id,
+                            Content = m.Content,
+                            Timestamp = m.Timestamp,
+                            ChatId = m.ChatId,
+                            UserId = m.UserId,
+                        }).ToList()
+                    })
+                    .AsSplitQuery()
+                    .FirstOrDefaultAsync();
+
 
             await Clients.Caller.SendAsync("ReceiveDataChat", chatDTO);
         }

@@ -145,10 +145,10 @@ namespace Quantum.ViewModels
             ListMessage?.Clear();
 
             ChatName = chatData.Name!;
+            _chatId = chatData.Id;
 
             foreach (var message in chatData.Messages!)
             {
-                _chatId = message.ChatId;
                 var user = chatData.Users!.FirstOrDefault(u => u.Id == message.UserId);
                 if (user != null)
                 {
