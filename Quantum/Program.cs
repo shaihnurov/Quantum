@@ -18,6 +18,5 @@ sealed class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace()
-// Insert this line after the 'AppBuilder.Configure<App>()' line in your app's 'Program.BuildAvaloniaApp' method:
-.RegisterActiproLicense("Future Actipro Customer", "AVA251-RVYDE-FBQQB-WHV64-6V3H");
+            .RegisterActiproLicense("Future Actipro Customer", "AVA251-1V7DE-1T20B-W5V64-6VZH");
 }

@@ -33,7 +33,7 @@ public abstract class ViewModelBase : ObservableObject, IServerConnectionHandler
         {
             try
             {
-                _hubConnection = new HubConnectionBuilder().WithUrl($"https://localhost:7159/{_signalRUrl}").WithAutomaticReconnect(
+                _hubConnection = new HubConnectionBuilder().WithUrl($"https://quantumserver.onrender.com/{_signalRUrl}").WithAutomaticReconnect(
                 [
                     TimeSpan.FromSeconds(3),
                     TimeSpan.FromSeconds(5),
@@ -42,7 +42,7 @@ public abstract class ViewModelBase : ObservableObject, IServerConnectionHandler
                 ]).Build();
 
                 await _hubConnection.StartAsync();
-                Log.Information($"Успешное подключение к серверу");
+                Log.Information("Успешное подключение к серверу");
                 return;
             }
             catch (HttpRequestException ex)

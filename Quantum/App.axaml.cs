@@ -6,8 +6,6 @@ using Avalonia.Markup.Xaml;
 using Quantum.ViewModels;
 using Quantum.Views;
 using Serilog;
-using System.Threading.Tasks;
-using Quantum.Service;
 
 namespace Quantum;
 
@@ -37,24 +35,9 @@ public partial class App : Application
             {
                 DataContext = new MainWindowViewModel(),
             };
-
-            desktop.ShutdownRequested += (_, _) => OnAppShutdown();
         }
 
         base.OnFrameworkInitializationCompleted();
-    }
-
-    private void OnAppShutdown()
-    {
-        // Загружаем данные о пользователе и проверяем флаг "запомнить меня"
-        Task.Run(async () =>
-        {
-            var userData = await UserDataStorage.GetUserData();
-            if (userData != null && !userData.IsRememberMe)
-            {
-                UserDataStorage.DeleteUserData();
-            }
-        }).Wait();
     }
 
     private void DisableAvaloniaDataAnnotationValidation()

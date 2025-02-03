@@ -14,22 +14,9 @@
         Title="Quantum" CanResize="False"
         Width="1000" Height="600" MinHeight="350" MinWidth="600">
 
-  <Window.Resources>
-    <ResourceDictionary>
-      <ResourceDictionary.ThemeDictionaries>
-        <ResourceDictionary x:Key='Light'>
-          <SolidColorBrush x:Key='BackgroundBorderBrush'>#EFEFF1</SolidColorBrush>
-        </ResourceDictionary>
-        <ResourceDictionary x:Key='Dark'>
-          <SolidColorBrush x:Key='BackgroundBorderBrush'>#2D3037</SolidColorBrush>
-        </ResourceDictionary>
-      </ResourceDictionary.ThemeDictionaries>
-    </ResourceDictionary>
-  </Window.Resources>
-  
-  <Design.DataContext>
-		<vm:MainWindowViewModel/>
-	</Design.DataContext>
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
 
 	<DockPanel>
 		<actipro:ChromedTitleBar DockPanel.Dock="Top" IsMaximizeButtonAllowed="False">
@@ -61,14 +48,10 @@
 						<Button ContentTemplate="{actipro:GlyphTemplate Refresh16}"
 						        Command="{Binding }"
 						        Theme="{actipro:ControlTheme TitleBarButton}"
-						        ToolTip.Tip="Reconnect" IsVisible="{Binding IsEnableSettingsBtn}"/>
-
-            <Button ContentTemplate="{actipro:GlyphTemplate LeftArrow16}" Command="{Binding LogOutCommand}"
-										Theme="{actipro:ControlTheme TitleBarButton}" IsVisible="{Binding IsEnableSettingsBtn}"
-										ToolTip.Tip="Log out" />
-
-            <actipro:ToggleThemeButton Theme="{actipro:ControlTheme TitleBarToggleThemeButton}" 
-						                           ToolTip.Tip="Change the subject" IsVisible="{Binding IsEnableSettingsBtn}"/>
+						        ToolTip.Tip="Переподключение" IsVisible="False"/>
+						
+						<actipro:ToggleThemeButton Theme="{actipro:ControlTheme TitleBarToggleThemeButton}" 
+						                           ToolTip.Tip="Сменить тему" IsVisible="False"/>
 					</StackPanel>
 				</primitives:OverlayInputFilter>
 			</actipro:ChromedTitleBar.RightContent>

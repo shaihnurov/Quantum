@@ -18,8 +18,9 @@
       <RowDefinition Height="*"/>
     </Grid.RowDefinitions>
 
-    <Border Grid.Column="0" Grid.Row="0" Margin="0"
-            HorizontalAlignment="Stretch" VerticalAlignment="Stretch" CornerRadius="0 0 5 0" Background="{DynamicResource BackgroundBorderBrush}">
+    <Border Grid.Column="0" Grid.Row="0" BorderThickness="1" CornerRadius="{actipro:ScaledCornerRadius 1}"
+        Padding="{actipro:ScaledThickness 2}" Background="#131515"
+        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
       <ContentControl Content="{Binding CurrentViewChatList}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
     </Border>
 

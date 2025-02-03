@@ -1,82 +1,130 @@
 ﻿using System;
 using System.Net.Http;
-using System.Text.Json;
-using System.Text;
+using System.Net.Sockets;
 using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 using Quantum.Service;
 using Serilog;
-using Quantum.Models;
+using Server.Model;
 
 namespace Quantum.ViewModels;
 
-public partial class RegisterViewModel : ObservableObject
+public class RegisterViewModel : ViewModelBase
 {
-    private readonly HttpClient _httpClient;
     private readonly MainWindowViewModel _mainWindowViewModel;
-    private readonly HubConnectionManager _hubConnectionManager;
-
-    #region ObservableProperty
-    [ObservableProperty]
+    
     private string? _email;
-    [ObservableProperty]
     private string? _login;
-    [ObservableProperty]
     private string? _name;
-    [ObservableProperty]
     private string? _password;
-    [ObservableProperty]
     private string? _confirmPassword;
-    [ObservableProperty]
     private bool _isRememberMe;
-    #endregion
 
-    public RegisterViewModel(MainWindowViewModel mainWindowViewModel, HubConnectionManager hubConnectionManager)
+    public string? Email
+    {
+        get => _email;
+        set => SetProperty(ref _email, value);
+    }
+    public string? Login
+    {
+        get => _login;
+        set => SetProperty(ref _login, value);
+    }
+    public string? Name
+    {
+        get => _name;
+        set => SetProperty(ref _name, value);
+    }
+    public string? Password
+    {
+        get => _password;
+        set => SetProperty(ref _password, value);
+    }
+    public string? ConfirmPassword
+    {
+        get => _confirmPassword;
+        set => SetProperty(ref _confirmPassword, value);
+    }
+    public bool IsRememberMe
+    {
+        get => _isRememberMe;
+        set => SetProperty(ref _isRememberMe, value);
+    }
+    
+    public RelayCommand AuthCommand { get; set; }
+    public AsyncRelayCommand RegisterCommand { get; set; }
+
+    public RegisterViewModel(MainWindowViewModel mainWindowViewModel) : base("register")
     {
         _mainWindowViewModel = mainWindowViewModel;
-        _httpClient = new HttpClient { BaseAddress = new Uri("https://localhost:7058/") };
-        _hubConnectionManager = hubConnectionManager;
+        
+        AuthCommand = new RelayCommand(() => {
+            mainWindowViewModel.CurrentView = new AuthViewModel(mainWindowViewModel);
+        });
+        RegisterCommand = new AsyncRelayCommand(RegisterUser);
     }
 
-    [RelayCommand]
-    public async Task Register()
+    public override async Task ConnectServer()
     {
-        var result = await SendRequestAsync("api/auth/register", new { Email, Login, Name, Password });
-
-        if (result.IsSuccessStatusCode)
+        try
         {
-            var content = await result.Content.ReadAsStringAsync();
-
-            var tokenObj = JsonSerializer.Deserialize<JsonElement>(content);
-            var tokenStr = tokenObj.GetProperty("token").GetString();
-
-            var userData = new UserDataJson
+            await base.ConnectServer();
+            
+            _hubConnection?.On<string, UserDataJson>("RegisterSuccess", async (response, userData) =>
+            { 
+                Dispatcher.UIThread.Post(() =>
+                {
+                    _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel);
+                });
+                
+                await _mainWindowViewModel.Notification("Register", response, true, 1, true);
+                await UserDataStorage.SaveUserData(userData);
+            });
+            
+            _hubConnection?.On<string>("RegisterError", async response =>
             {
-                Token = tokenStr,
-                IsRememberMe = IsRememberMe
-            }; 
-            await UserDataStorage.SaveUserData(userData);
-
-            _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel, _hubConnectionManager);
-
-            await _mainWindowViewModel.Notification("Сервер", "Успешная регистрация", true, 1, true);
-            Log.Information($"Token на клиенте регистрации - {tokenStr}");
+                await _mainWindowViewModel.Notification("Register", response, true, 3, true);
+            });
         }
-        else
+        catch (HttpRequestException ex)
         {
-            await _mainWindowViewModel.Notification("Сервер", await result.Content.ReadAsStringAsync(), true, 3, true);
+            Log.Error(ex, "Не удалось подключиться к серверу.");
+            await _mainWindowViewModel.Notification("Server", "Failed to connect to the server", true, 3, true);
+        }
+        catch (SocketException ex)
+        {
+            Log.Error(ex, "Сетевая ошибка при подключении к серверу.");
+            await _mainWindowViewModel.Notification("Network", "A network error occurred while connecting to the server", true, 3, true);
+        }
+        catch (HubException ex)
+        {
+            Log.Error(ex, "Ошибка подключения к SignalR хабу.");
+            await _mainWindowViewModel.Notification("Server", "An error occurred when connecting the SignalR hub", true, 3, true);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Log.Error(ex, "Ошибка в приложении.");
+            await _mainWindowViewModel.Notification("Error", "An error has occurred in the application. Please try again", true, 3, true);
+        }
+        catch (TimeoutException ex)
+        {
+            Log.Error(ex, "Соединение с сервером прервано.");
+            await _mainWindowViewModel.Notification("Timeout", "The connection to the server has been terminated. Please try again", true, 3, true);
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Произошла непредвиденная ошибка.");
+            await _mainWindowViewModel.Notification("Error", "There's been an unforeseen error", true, 3, true);
         }
     }
-    [RelayCommand]
-    public void FormAuth()
+    private async Task RegisterUser()
     {
-        _mainWindowViewModel.CurrentView = new AuthViewModel(_mainWindowViewModel, _hubConnectionManager);
-    }
-    private async Task<HttpResponseMessage> SendRequestAsync(string url, object data)
-    {
-        var json = JsonSerializer.Serialize(data);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
-        return await _httpClient.PostAsync(url, content);
+        if(Password == ConfirmPassword)
+            await _hubConnection!.InvokeAsync("RegisterUser", Email, Login, Name, Password, IsRememberMe);
+        else
+            await _mainWindowViewModel.Notification("Register", "Password does not match the conditions", true, 3, true);
     }
 }
