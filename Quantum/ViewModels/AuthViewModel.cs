@@ -1,119 +1,86 @@
 ﻿using System;
 using System.Net.Http;
-using System.Net.Sockets;
+using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
-using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.SignalR.Client;
 using Quantum.Service;
 using Serilog;
-using Server.Model;
+using Quantum.Models;
 
 namespace Quantum.ViewModels;
 
-public class AuthViewModel : ViewModelBase
+public partial class AuthViewModel : ObservableObject
 {
+    private readonly HttpClient _httpClient;
     private readonly MainWindowViewModel _mainWindowViewModel;
-    
+    private readonly HubConnectionManager _hubConnectionManager;
+
+    [ObservableProperty]
     private string? _email;
+    [ObservableProperty]
     private string? _password;
+    [ObservableProperty]
     private bool _isRememberMe;
 
-    public string? Email
-    {
-        get => _email;
-        set => SetProperty(ref _email, value);
-    }
-    public string? Password
-    {
-        get => _password;
-        set => SetProperty(ref _password, value);
-    }
-    public bool IsRememberMe
-    {
-        get => _isRememberMe;
-        set => SetProperty(ref _isRememberMe, value);
-    }
-
-    public RelayCommand RegisterCommand { get; set; }
-    public AsyncRelayCommand AuthCommand { get; set; }
-
-    public AuthViewModel(MainWindowViewModel mainWindowViewModel) : base("auth")
+    public AuthViewModel(MainWindowViewModel mainWindowViewModel, HubConnectionManager hubConnectionManager)
     {
         _mainWindowViewModel = mainWindowViewModel;
-        
-        RegisterCommand = new RelayCommand(() => {
-            mainWindowViewModel.CurrentView = new RegisterViewModel(mainWindowViewModel);
-        });
-        AuthCommand = new AsyncRelayCommand(AuthUser);
+        _httpClient = new HttpClient { BaseAddress = new Uri("https://localhost:7058/") };
+        _hubConnectionManager = hubConnectionManager;
     }
-    
-    public override async Task ConnectServer()
+
+    [RelayCommand]
+    public async Task Login()
     {
-        try
-        {
-            await base.ConnectServer();
-            
-            _hubConnection?.On<string>("AuthSuccess", async response => {
-                Dispatcher.UIThread.Post(() =>
-                { 
-                    _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel);
-                });
-                await _mainWindowViewModel.Notification("Auth", response, true, 1, true);
-            });
+        var result = await SendRequestAsync("api/auth/login", new { Email, Password });
 
-            _hubConnection?.On<string, UserDataJson>("FirtsAuthSuccess", async (response, userData) => {
-                await UserDataStorage.SaveUserData(userData);
-                Dispatcher.UIThread.Post(() =>
-                {
-                    _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel);
-                });
+        if (result.IsSuccessStatusCode)
+        {
+            var content = await result.Content.ReadAsStringAsync();
 
-                await _mainWindowViewModel.Notification("Auth", response, true, 1, true);
-            });
+            var tokenObj = JsonSerializer.Deserialize<JsonElement>(content);
+            var tokenStr = tokenObj.GetProperty("token").GetString();
 
-            _hubConnection?.On<string>("AuthError", async response =>
-            {
-                await _mainWindowViewModel.Notification("Auth", response, true, 3, true);
-                UserDataStorage.DeleteUserData();
-            });
+            var userData = new UserDataJson 
+            { 
+                Token = tokenStr,
+                IsRememberMe = IsRememberMe
+            };
+            await UserDataStorage.SaveUserData(userData);
 
-            await _hubConnection!.InvokeAsync("AuthToken", await UserDataStorage.GetUserData());
+            _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel, _hubConnectionManager);
+
+            await _mainWindowViewModel.Notification("Сервер", "Успешная авторизация", true, 1, true);
+            Log.Information($"Token на клиенте авторизации - {tokenStr}");
         }
-        catch (HttpRequestException ex)
+        else
         {
-            Log.Error(ex, "Не удалось подключиться к серверу.");
-            await _mainWindowViewModel.Notification("Server", "Failed to connect to the server", true, 3, true);
-        }
-        catch (SocketException ex)
-        {
-            Log.Error(ex, "Сетевая ошибка при подключении к серверу.");
-            await _mainWindowViewModel.Notification("Network", "A network error occurred while connecting to the server", true, 3, true);
-        }
-        catch (HubException ex)
-        {
-            Log.Error(ex, "Ошибка подключения к SignalR хабу.");
-            await _mainWindowViewModel.Notification("Server", "An error occurred when connecting the SignalR hub", true, 3, true);
-        }
-        catch (InvalidOperationException ex)
-        {
-            Log.Error(ex, "Ошибка в приложении.");
-            await _mainWindowViewModel.Notification("Error", "An error has occurred in the application. Please try again", true, 3, true);
-        }
-        catch (TimeoutException ex)
-        {
-            Log.Error(ex, "Соединение с сервером прервано.");
-            await _mainWindowViewModel.Notification("Timeout", "The connection to the server has been terminated. Please try again", true, 3, true);
-        }
-        catch (Exception ex)
-        {
-            Log.Fatal(ex, "Произошла непредвиденная ошибка.");
-            await _mainWindowViewModel.Notification("Error", "There's been an unforeseen error", true, 3, true);
+            await _mainWindowViewModel.Notification("Сервер", await result.Content.ReadAsStringAsync(), true, 3, true);
         }
     }
-    private async Task AuthUser()
+    [RelayCommand]
+    public void FormRegister()
     {
-        await _hubConnection!.InvokeAsync("AuthUser", Email, Password, IsRememberMe);
+        _mainWindowViewModel.CurrentView = new RegisterViewModel(_mainWindowViewModel, _hubConnectionManager);
+    }
+    private async Task<HttpResponseMessage> SendRequestAsync(string url, object data)
+    {
+        var json = JsonSerializer.Serialize(data);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        return await _httpClient.PostAsync(url, content);
+    }
+    public async Task AutoLogin()
+    {
+        var userData = await UserDataStorage.GetUserData();
+        if (userData != null && !string.IsNullOrEmpty(userData.Token))
+        {
+            // Авторизуем пользователя с сохраненным токеном
+            Log.Information("Найден сохраненный токен. Автоматическая авторизация...");
+
+            _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel, _hubConnectionManager);
+            await _mainWindowViewModel.Notification("Сервер", "Автоматическая авторизация выполнена", true, 1, true);
+        }
     }
 }

@@ -35,12 +35,12 @@
                                       IsChecked="{Binding IsRememberMe}" />
                     </StackPanel>
 
-                    <Button Content="Register" Margin="0 10 0 10" Command="{Binding RegisterCommand}"/>
+                    <Button Content="Register" Margin="0 10 0 10" Command="{Binding Register}"/>
                     
                     <TextBlock TextWrapping="Wrap">
                         <Run>Already have an account? </Run>
                         <InlineUIContainer>
-                            <actipro:HyperlinkTextBlock Command="{Binding AuthCommand}">Sign in</actipro:HyperlinkTextBlock>
+                            <actipro:HyperlinkTextBlock Command="{Binding FormAuth}">Sign in</actipro:HyperlinkTextBlock>
                         </InlineUIContainer>
                         <Run> for more information</Run>
                     </TextBlock>

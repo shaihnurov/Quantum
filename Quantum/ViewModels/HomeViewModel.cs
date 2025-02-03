@@ -1,43 +1,25 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Quantum.Service;
-using Quantum.Views;
 
 namespace Quantum.ViewModels;
 
-public class HomeViewModel : ObservableObject
+public partial class HomeViewModel : ObservableObject
 {
     private readonly MainWindowViewModel _mainWindowViewModel;
+    private readonly HubConnectionManager _hubConnectionManager;
 
+    [ObservableProperty]
     private object? _currentViewChat;
+    [ObservableProperty]
     private object? _currentViewChatList;
 
-    public object? CurrentViewChat
-    {
-        get => _currentViewChat;
-        set
-        {
-            SetProperty(ref _currentViewChat, value);
-
-            if (_currentViewChat is IServerConnectionHandler newServerConnectionHandler)
-                newServerConnectionHandler.ConnectServer();
-        }
-    }
-    public object? CurrentViewChatList
-    {
-        get => _currentViewChatList;
-        set
-        {
-            SetProperty(ref _currentViewChatList, value);
-
-            if (_currentViewChatList is IServerConnectionHandler newServerConnectionHandler)
-                newServerConnectionHandler.ConnectServer();
-        }
-    }
-
-    public HomeViewModel(MainWindowViewModel mainWindowViewModel)
+    public HomeViewModel(MainWindowViewModel mainWindowViewModel, HubConnectionManager hubConnectionManager)
     {
         _mainWindowViewModel = mainWindowViewModel;
+        _hubConnectionManager = hubConnectionManager;
+        _mainWindowViewModel.IsEnableSettingsBtn = true;
+        _mainWindowViewModel.CurrentNameView = "Chats";
 
-        CurrentViewChatList = new ChatListViewModel(_mainWindowViewModel, this);
+        CurrentViewChatList = new ChatListViewModel(_mainWindowViewModel, this, _hubConnectionManager);
     }
 }

@@ -1,60 +1,40 @@
 ﻿using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Quantum.Service;
 
 namespace Quantum.ViewModels;
 
-public class MainWindowViewModel : ObservableObject
+public partial class MainWindowViewModel : ObservableObject
 {
+    private readonly HubConnectionManager _hubConnectionManager;
+
+    #region ObservableProperty
+    [ObservableProperty]
     private object? _currentView;
+    [ObservableProperty]
     private string? _currentNameView;
-
+    [ObservableProperty]
     private string? _notificationMessage;
+    [ObservableProperty]
     private string? _notificationTitleText;
+    [ObservableProperty]
     private int _notificationStatus;
+    [ObservableProperty]
     private bool _notificationVisible = false;
-    
-    public object? CurrentView
-    {
-        get => _currentView;
-        set
-        {
-            SetProperty(ref _currentView, value);
+    [ObservableProperty]
+    private bool _isEnableSettingsBtn = false;
+    #endregion
 
-            if (_currentView is IServerConnectionHandler newServerConnectionHandler)
-                newServerConnectionHandler.ConnectServer();
-        }
-    }
-    public string? CurrentNameView
-    {
-        get => _currentNameView;
-        set => SetProperty(ref _currentNameView, value);
-    }
-    public string? NotificationMessage
-    {
-        get => _notificationMessage;
-        set => SetProperty(ref _notificationMessage, value);
-    }
-    public string? NotificationTitleText
-    {
-        get => _notificationTitleText;
-        set => SetProperty(ref _notificationTitleText, value);
-    }
-    public int NotificationStatus
-    {
-        get => _notificationStatus;
-        set => SetProperty(ref _notificationStatus, value);
-    }
-    public bool NotificationVisible
-    {
-        get => _notificationVisible;
-        set => SetProperty(ref _notificationVisible, value);
-    }
-    
     public MainWindowViewModel()
     {
+        _hubConnectionManager = new HubConnectionManager();
+        var authViewModel = new AuthViewModel(this, _hubConnectionManager);
+        CurrentView = authViewModel;
+
         CurrentNameView = "Authentication";
-        CurrentView = new AuthViewModel(this);
+
+        Task.Run(async () => await authViewModel.AutoLogin());
     }
     
     public async Task Notification(string title, string message, bool visibleInfoBar, int statusCode, bool timeLife)
@@ -69,5 +49,14 @@ public class MainWindowViewModel : ObservableObject
             await Task.Delay(3000);
             NotificationVisible = false;
         }
+    }
+
+    [RelayCommand]
+    private void LogOut()
+    {
+        CurrentNameView = "Authentication";
+        CurrentView = new AuthViewModel(this, _hubConnectionManager);
+
+        UserDataStorage.DeleteUserData();
     }
 }

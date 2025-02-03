@@ -1,155 +1,92 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.AspNetCore.SignalR;
-using Serilog;
 using System;
-using System.Net.Http;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using Quantum.Service;
-using Server.Model.DTO;
-using ActiproSoftware.UI.Avalonia.Controls;
-using Tmds.DBus.Protocol;
+using WebAPI.Models.DTO;
 using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Quantum.ViewModels
 {
-    public class ChatActiveViewModel : ViewModelBase
+    public partial class ChatActiveViewModel : ObservableObject
     {
+        private readonly IDialogService _dialogService;
         private readonly MainWindowViewModel _mainWindowViewModel;
+        private readonly HomeViewModel _homeViewModel;
+        private readonly HubConnectionManager _hubConnectionManager;
+        private HubConnection? _chatHubConnection;
+        private ChatDTO _chatDTO;
 
-        private bool _chatvisible = false;
+        #region ObservableProperty
+        [ObservableProperty]
+        private bool _chatVisible = false;
+        [ObservableProperty]
         private bool _titleTextChat = true;
+        [ObservableProperty]
         private string? _name;
+        [ObservableProperty]
         private string? _chatName;
+        [ObservableProperty]
         private int _chatId;
+        [ObservableProperty]
         private string? _messageTime;
+        [ObservableProperty]
         private string? _message = string.Empty;
-        public ObservableCollection<string>? _listMessage;
+        [ObservableProperty]
+        private ObservableCollection<string>? _listMessage;
+        #endregion
 
-        public bool ChatVisible
+        public ChatActiveViewModel(MainWindowViewModel mainWindowViewModel, HomeViewModel homeViewModel, HubConnectionManager hubConnectionManager, ChatDTO chatData)
         {
-            get => _chatvisible;
-            set => SetProperty(ref _chatvisible, value);
-        }
-        public bool TitleTextChat
-        {
-            get => _titleTextChat;
-            set => SetProperty(ref _titleTextChat, value);
-        }
-        public string? Name
-        {
-            get => _name;
-            set => SetProperty(ref _name, value);
-        }
-        public string? ChatName
-        {
-            get => _chatName;
-            set => SetProperty(ref _chatName, value);
-        }
-        public string? MessageTime
-        {
-            get => _messageTime;
-            set => SetProperty(ref _messageTime, value);
-        }
-        public string? Message
-        {
-            get => _message;
-            set => SetProperty(ref _message, value);
-        }
-        public ObservableCollection<string>? ListMessage
-        {
-            get => _listMessage;
-            set => SetProperty(ref _listMessage, value);
-        }
-
-        public AsyncRelayCommand SendMessageCommand { get; set; }
-
-        public ChatActiveViewModel(MainWindowViewModel mainWindowViewModel, ChatDTO chatData) : base("chathub")
-        {
+            _dialogService = new DialogService();
             _mainWindowViewModel = mainWindowViewModel;
+            _homeViewModel = homeViewModel;
+            _hubConnectionManager = hubConnectionManager;
+
             ListMessage = [];
+            _chatDTO = chatData;
             LoadChat(chatData);
-
-            SendMessageCommand = new AsyncRelayCommand(SendMessage);
+            Task.Run(async () => await InitializeConnectionAsync());
         }
 
-        public override async Task ConnectServer()
+        private async Task InitializeConnectionAsync()
         {
-            try
+            // Получаем подключение к чату
+            _chatHubConnection = await _hubConnectionManager.GetOrCreateConnectionAsync("loadUserChat", "https://localhost:7058/loadUserChat");
+
+            _chatHubConnection?.On<string, string>("ReceiveMessage", (userName, message) =>
             {
-                await base.ConnectServer();
-
-                _hubConnection?.On<string, string>("ReceiveMessage", (userName, message) => {
-                    Dispatcher.UIThread.Post(() =>
-                    {
-                        var messageText = $"{userName}: {message}";
-                        MessageTime = TimeOnly.FromDateTime(DateTime.Now).ToString("HH:mm");
-                        ListMessage.Add(messageText);
-                    });
-                });
-
-                _hubConnection?.On<string>("ReceiveMessageError", async response =>
+                Dispatcher.UIThread.Post(() =>
                 {
-                    await _mainWindowViewModel.Notification("Send", response, true, 3, true);
+                    var messageText = $"{userName}: {message}";
+                    MessageTime = TimeOnly.FromDateTime(DateTime.Now).ToString("HH:mm");
+                    ListMessage?.Add(messageText);
                 });
-            }
-            catch (HttpRequestException ex)
+            });
+
+            _chatHubConnection?.On<string>("ReceiveMessageError", async response =>
             {
-                Log.Error(ex, "Не удалось подключиться к серверу.");
-                await _mainWindowViewModel.Notification("Server", "Failed to connect to the server", true, 3, true);
-            }
-            catch (SocketException ex)
-            {
-                Log.Error(ex, "Сетевая ошибка при подключении к серверу.");
-                await _mainWindowViewModel.Notification("Network", "A network error occurred while connecting to the server", true, 3, true);
-            }
-            catch (HubException ex)
-            {
-                Log.Error(ex, "Ошибка подключения к SignalR хабу.");
-                await _mainWindowViewModel.Notification("Server", "An error occurred when connecting the SignalR hub", true, 3, true);
-            }
-            catch (InvalidOperationException ex)
-            {
-                Log.Error(ex, "Ошибка в приложении.");
-                await _mainWindowViewModel.Notification("Error", "An error has occurred in the application. Please try again", true, 3, true);
-            }
-            catch (TimeoutException ex)
-            {
-                Log.Error(ex, "Соединение с сервером прервано.");
-                await _mainWindowViewModel.Notification("Timeout", "The connection to the server has been terminated. Please try again", true, 3, true);
-            }
-            catch (Exception ex)
-            {
-                Log.Fatal(ex, "Произошла непредвиденная ошибка.");
-                await _mainWindowViewModel.Notification("Error", "There's been an unforeseen error", true, 3, true);
-            }
+                await _mainWindowViewModel.Notification("Send", response, true, 3, true);
+            });
         }
-        private async Task SendMessage()
-        {
-            if(Message != string.Empty)
-            {
-                var userData = await UserDataStorage.GetUserData();
-                ChatVisible = true;
-                TitleTextChat = false;
-                await _hubConnection!.InvokeAsync("SendMessage", userData.Name, Message, _chatId, userData.Id);
-                Message = string.Empty;
-            }
-        }
+
         private void LoadChat(ChatDTO chatData)
         {
             ChatVisible = true;
             TitleTextChat = false;
+            _chatDTO = chatData;
             ListMessage?.Clear();
 
-            ChatName = chatData.Name!;
-            _chatId = chatData.Id;
+            ChatName = _chatDTO.Name!;
+            _chatId = _chatDTO.Id;
 
-            foreach (var message in chatData.Messages!)
+            foreach (var message in _chatDTO.Messages!)
             {
-                var user = chatData.Users!.FirstOrDefault(u => u.Id == message.UserId);
+                var user = _chatDTO.Users!.FirstOrDefault(u => u.Id == message.UserId);
                 if (user != null)
                 {
                     var messageText = $"{user.Name}: {message.Content}";
@@ -157,6 +94,23 @@ namespace Quantum.ViewModels
                     ListMessage?.Add(messageText);
                 }
             }
+        }
+        [RelayCommand]
+        private async Task SendMessage()
+        {
+            if (!string.IsNullOrWhiteSpace(Message))
+            {
+                var userData = await UserDataStorage.GetUserData();
+                ChatVisible = true;
+                TitleTextChat = false;
+                await _chatHubConnection!.InvokeAsync("SendMessage", Message, _chatId);
+                Message = string.Empty;
+            }
+        }
+        [RelayCommand]
+        private async Task OpenSettings()
+        {
+            await _dialogService.ShowDialogAsync(_mainWindowViewModel, _homeViewModel, _hubConnectionManager, _chatDTO);
         }
     }
 }
