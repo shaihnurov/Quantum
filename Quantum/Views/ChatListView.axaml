@@ -23,8 +23,8 @@
                 <Button CommandParameter="{Binding}"
                         Command="{Binding #Chats.((vm:ChatListViewModel)DataContext).SelectedChatCommand}">
                   <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border CornerRadius="15" Width="40" Height="40" BorderBrush="Red" BorderThickness="1">
-                      <Image/>
+                    <Border CornerRadius="45" Width="40" Height="40">
+                      <actipro:Avatar Description="{Binding Name}" />
                     </Border>
                     
                     <TextBlock Margin="5 10 0 0" FontWeight="Bold" Text="{Binding Name}" TextWrapping="Wrap"/>

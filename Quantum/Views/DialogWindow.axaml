@@ -32,8 +32,8 @@
 
         <WrapPanel Grid.Row="0" Orientation="Vertical" VerticalAlignment="Center"
                    HorizontalAlignment="Center" Margin="0 10 0 0">
-          <Border CornerRadius="45" Width="85" Height="85" BorderBrush="Red" BorderThickness="1">
-            <Image/>
+          <Border CornerRadius="45" Width="85" Height="85">
+            <actipro:Avatar Description="{Binding ChatName}" />
           </Border>
 
           <TextBlock Text="{Binding ChatName}" Margin="0 10 0 0" FontSize="18" FontWeight="DemiBold"/>
@@ -52,7 +52,7 @@
                 <DataTemplate>
                   <Border Margin="10 5 10 5">
                     <WrapPanel Orientation="Horizontal">
-                      <Border CornerRadius="45" Width="45" Height="45">
+                      <Border CornerRadius="45" Width="40" Height="40">
                         <actipro:Avatar Description="{Binding Name}" />
                       </Border>
                       <TextBlock Text="{Binding Name}" VerticalAlignment="Center" HorizontalAlignment="Left"

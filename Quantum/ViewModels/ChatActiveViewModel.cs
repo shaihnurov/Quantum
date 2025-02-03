@@ -37,7 +37,7 @@ namespace Quantum.ViewModels
         [ObservableProperty]
         private string? _message = string.Empty;
         [ObservableProperty]
-        private ObservableCollection<string>? _listMessage;
+        private ObservableCollection<MessageDTO>? _listMessage;
         #endregion
 
         public ChatActiveViewModel(MainWindowViewModel mainWindowViewModel, HomeViewModel homeViewModel, HubConnectionManager hubConnectionManager, ChatDTO chatData)
@@ -56,15 +56,16 @@ namespace Quantum.ViewModels
         private async Task InitializeConnectionAsync()
         {
             // Получаем подключение к чату
-            _chatHubConnection = await _hubConnectionManager.GetOrCreateConnectionAsync("loadUserChat", "https://localhost:7058/loadUserChat");
+            _chatHubConnection = await _hubConnectionManager.GetOrCreateConnectionAsync("chathub", "https://localhost:7058/chathub");
 
-            _chatHubConnection?.On<string, string>("ReceiveMessage", (userName, message) =>
+            _chatHubConnection?.On<string, string, DateTime>("ReceiveMessage", (userName, message, timestamp) =>
             {
                 Dispatcher.UIThread.Post(() =>
                 {
-                    var messageText = $"{userName}: {message}";
-                    MessageTime = TimeOnly.FromDateTime(DateTime.Now).ToString("HH:mm");
-                    ListMessage?.Add(messageText);
+                    var localTime = TimeZoneInfo.ConvertTimeFromUtc(timestamp, TimeZoneInfo.Local);
+                    var messageText = $"{message}";
+                    Name = userName;
+                    ListMessage?.Add(new MessageDTO { Content = messageText, Timestamp = localTime });
                 });
             });
 
@@ -73,7 +74,6 @@ namespace Quantum.ViewModels
                 await _mainWindowViewModel.Notification("Send", response, true, 3, true);
             });
         }
-
         private void LoadChat(ChatDTO chatData)
         {
             ChatVisible = true;
@@ -82,16 +82,17 @@ namespace Quantum.ViewModels
             ListMessage?.Clear();
 
             ChatName = _chatDTO.Name!;
-            _chatId = _chatDTO.Id;
+            ChatId = _chatDTO.Id;
 
             foreach (var message in _chatDTO.Messages!)
             {
                 var user = _chatDTO.Users!.FirstOrDefault(u => u.Id == message.UserId);
                 if (user != null)
                 {
-                    var messageText = $"{user.Name}: {message.Content}";
-                    MessageTime = message.Timestamp.ToString("HH:mm");
-                    ListMessage?.Add(messageText);
+                    var messageText = $"{message.Content}";
+                    var localTime = TimeZoneInfo.ConvertTimeFromUtc(message.Timestamp, TimeZoneInfo.Local);
+                    Name = user.Name;
+                    ListMessage?.Add(new MessageDTO { Content = messageText, Timestamp = localTime });
                 }
             }
         }
@@ -103,7 +104,7 @@ namespace Quantum.ViewModels
                 var userData = await UserDataStorage.GetUserData();
                 ChatVisible = true;
                 TitleTextChat = false;
-                await _chatHubConnection!.InvokeAsync("SendMessage", Message, _chatId);
+                await _chatHubConnection!.InvokeAsync("SendMessage", Message, ChatId);
                 Message = string.Empty;
             }
         }

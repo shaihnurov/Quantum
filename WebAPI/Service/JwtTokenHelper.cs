@@ -26,7 +26,7 @@ namespace WebAPI.Service
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(1), // Время жизни токена
+                expires: DateTime.UtcNow.AddHours(5), // Время жизни токена
                 signingCredentials: creds
             );
 

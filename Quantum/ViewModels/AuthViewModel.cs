@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using Quantum.Service;
 using Serilog;
 using Quantum.Models;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Quantum.ViewModels;
 
@@ -76,11 +77,41 @@ public partial class AuthViewModel : ObservableObject
         var userData = await UserDataStorage.GetUserData();
         if (userData != null && !string.IsNullOrEmpty(userData.Token))
         {
-            // Авторизуем пользователя с сохраненным токеном
-            Log.Information("Найден сохраненный токен. Автоматическая авторизация...");
+            // Проверка на валидность токена
+            if (IsTokenValid(userData.Token))
+            {
+                // Авторизуем пользователя с сохраненным токеном
+                Log.Information("Найден сохраненный токен. Автоматическая авторизация...");
 
-            _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel, _hubConnectionManager);
-            await _mainWindowViewModel.Notification("Сервер", "Автоматическая авторизация выполнена", true, 1, true);
+                _mainWindowViewModel.CurrentView = new HomeViewModel(_mainWindowViewModel, _hubConnectionManager);
+                await _mainWindowViewModel.Notification("Сервер", "Автоматическая авторизация выполнена", true, 1, true);
+            }
+            else
+            {
+                // Если токен истек, очищаем данные и перенаправляем на экран авторизации
+                UserDataStorage.DeleteUserData();
+                _mainWindowViewModel.CurrentView = new AuthViewModel(_mainWindowViewModel, _hubConnectionManager);
+                await _mainWindowViewModel.Notification("Ошибка", "Токен истек, пожалуйста, авторизуйтесь заново", true, 3, true);
+            }
+        }
+        else
+        {
+            _mainWindowViewModel.CurrentView = new AuthViewModel(_mainWindowViewModel, _hubConnectionManager);
         }
     }
+    public bool IsTokenValid(string token)
+    {
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            var expiryDate = jwtToken.ValidTo;
+            return expiryDate > DateTime.UtcNow;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
 }

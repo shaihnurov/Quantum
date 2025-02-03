@@ -19,9 +19,11 @@
       <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key='Light'>
           <SolidColorBrush x:Key='BackgroundBorderBrush'>#EFEFF1</SolidColorBrush>
+          <SolidColorBrush x:Key='BackgroundMessage'>#0868a7</SolidColorBrush>
         </ResourceDictionary>
         <ResourceDictionary x:Key='Dark'>
           <SolidColorBrush x:Key='BackgroundBorderBrush'>#2D3037</SolidColorBrush>
+          <SolidColorBrush x:Key='BackgroundMessage'>#65afe0</SolidColorBrush>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
     </ResourceDictionary>

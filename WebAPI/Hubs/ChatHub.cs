@@ -21,19 +21,20 @@ namespace WebAPI.Hubs
         public async Task SendMessage(string message, int chatId)
         {
             var userName = Context.User?.Identity?.Name;
+            var timestamp = DateTime.UtcNow;
 
-            await Clients.All.SendAsync("ReceiveMessage", userName, message);
+            await Clients.All.SendAsync("ReceiveMessage", userName, message, timestamp);
 
-            await SaveMessageContext(message, chatId);
+            await SaveMessageContext(message, chatId, timestamp);
         }
-        private async Task SaveMessageContext(string message, int chatId)
+        private async Task SaveMessageContext(string message, int chatId, DateTime timestamp)
         {
             var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             var chatModel = new MessageModel
             {
                 Content = message,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = timestamp,
                 ChatId = chatId,
                 UserId = int.Parse(userId)
             };
